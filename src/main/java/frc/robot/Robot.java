@@ -24,11 +24,11 @@ public class Robot extends TimedRobot {
     public Robot() {
         controller = new XboxController(0);
 
-
-        if(true) {//using Kraknes
             motor1 = new Kraken(0);
             motor2 = new Kraken(1);
-        }
+            //motor1 = new Neo(0);
+            //motor2 = new Neo(1);
+
 
         SmartDashboard.setDefaultNumber("Top speed", 0);
         SmartDashboard.setDefaultNumber("Bottom speed", 0);
