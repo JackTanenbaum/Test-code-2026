@@ -9,6 +9,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
+import org.littletonrobotics.junction.Logger;
 
 public class Kraken implements MotorIO {
     private final TalonFX motor;
@@ -70,6 +71,8 @@ public class Kraken implements MotorIO {
 
     @Override
     public void periodic() {
+        voltageSignal.refresh();
+        Logger.recordOutput("Velocity", control.Velocity);
 
     }
 

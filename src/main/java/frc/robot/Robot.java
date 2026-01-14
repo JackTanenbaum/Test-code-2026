@@ -10,24 +10,35 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
  * the TimedRobot documentation. If you change the name of this class or the package after creating
  * this project, you must also update the Main.java file in the project.
  */
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot{
     private MotorIO motor1;
     private MotorIO motor2;
 
     private final XboxController controller;
     public Robot() {
+        Logger.recordMetadata("ProjectName", "Shooter test code");
+        if(isReal()){
+            Logger.addDataReceiver(new NT4Publisher());
+        }else{
+            Logger.addDataReceiver(new NT4Publisher());
+        }
+        Logger.start();
+
         controller = new XboxController(0);
 
             motor1 = new Kraken(0);
             motor2 = new Kraken(1);
-            //motor1 = new Neo(0);
-            //motor2 = new Neo(1);
+           /* motor1 = new Neo(0);
+            motor2 = new Neo(1);*/
 
 
         SmartDashboard.setDefaultNumber("Top speed", 0);
