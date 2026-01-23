@@ -2,17 +2,21 @@ package frc.robot;
 
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
+import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
 import org.littletonrobotics.junction.Logger;
 
 public class Kraken implements MotorIO {
-    private final TalonFX motor;
+    private final TalonFX leader;
+    private final TalonFX follower;
     private final TalonFXConfiguration config;
 
     private final StatusSignal<AngularVelocity> velocitySignal;
@@ -21,17 +25,21 @@ public class Kraken implements MotorIO {
     private final StatusSignal<Voltage> voltageSignal;
 
     private final VelocityVoltage control;
+    private final Follower followerControl;
+
 
 
 
 
 
     public Kraken(int id) {
-        motor = new TalonFX(id);
-
+        leader = new TalonFX(id);
+        follower = new TalonFX(1);
+        followerControl = new Follower(id, MotorAlignmentValue.Opposed);
 
         config = new TalonFXConfiguration();
-        config.CurrentLimits.SupplyCurrentLimit = 40;
+        config.CurrentLimits.SupplyCurrentLimit = 50;
+        config.CurrentLimits.StatorCurrentLimit = 100;
         config.CurrentLimits.StatorCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
@@ -46,12 +54,15 @@ public class Kraken implements MotorIO {
 
         config.Slot0.kV = .125;
 
-        motor.getConfigurator().apply(config);
 
-        velocitySignal = motor.getVelocity();
-        supplyCurrentSignal = motor.getSupplyCurrent();
-        satorCurrentSignal = motor.getSupplyCurrent();
-        voltageSignal = motor.getMotorVoltage();
+        leader.getConfigurator().apply(config);
+
+        velocitySignal = leader.getVelocity();
+        supplyCurrentSignal = leader.getSupplyCurrent();
+        satorCurrentSignal = leader.getSupplyCurrent();
+        voltageSignal = leader.getMotorVoltage();
+
+        follower.setControl(followerControl);
 
         control = new VelocityVoltage(0);
         control.Slot = 0;
@@ -60,19 +71,33 @@ public class Kraken implements MotorIO {
         control.LimitForwardMotion = false;
         control.LimitReverseMotion = false;
 
-        motor.setControl(control);
+        leader.setControl(control);
     }
     @Override
     public void setVelocity(double velocity) {
         control.Velocity = velocity/60;
-        motor.setControl(control);
+        leader.setControl(control);
 
     }
 
     @Override
     public void periodic() {
         voltageSignal.refresh();
-        Logger.recordOutput("Velocity", control.Velocity);
+        Logger.recordOutput("Velocity", -control.Velocity*60);
+        Logger.recordOutput("Real Velocity", -leader.getVelocity().getValue().in(Units.RPM));
+        Logger.recordOutput("Volts", leader.getMotorVoltage().getValue().in(Units.Volts));
+        Logger.recordOutput("Amps Stator", leader.getStatorCurrent().getValue().in(Units.Amps));
+        Logger.recordOutput("Amps Supply", leader.getSupplyCurrent().getValue().in(Units.Amps));
+        Logger.recordOutput("Motor Temp 1", leader.getDeviceTemp().getValue().in(Units.Celsius));
+
+        Logger.recordOutput("Volts 2", follower.getMotorVoltage().getValue().in(Units.Volts));
+        Logger.recordOutput("Amps Stator 2", follower.getStatorCurrent().getValue().in(Units.Milliamps));
+        Logger.recordOutput("Amps Supply 2", follower.getSupplyCurrent().getValue().in(Units.Milliamps));
+        Logger.recordOutput("Motor Temp 2", follower.getDeviceTemp().getValue().in(Units.Celsius));
+
+
+
+
 
     }
 
