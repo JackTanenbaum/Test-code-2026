@@ -8,6 +8,7 @@ import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -28,13 +29,9 @@ public class Kraken implements MotorIO {
     private final Follower followerControl;
 
 
-
-
-
-
     public Kraken(int id) {
         leader = new TalonFX(id);
-        follower = new TalonFX(1);
+        follower = new TalonFX(2);
         followerControl = new Follower(id, MotorAlignmentValue.Opposed);
 
         config = new TalonFXConfiguration();
@@ -43,7 +40,7 @@ public class Kraken implements MotorIO {
         config.CurrentLimits.StatorCurrentLimitEnable = true;
         config.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-        config.MotorOutput.NeutralMode = NeutralModeValue.Brake;
+        config.MotorOutput.NeutralMode = NeutralModeValue.Coast;
         config.MotorOutput.Inverted = InvertedValue.Clockwise_Positive;
 
         config.Voltage.PeakForwardVoltage = 12;
@@ -52,10 +49,13 @@ public class Kraken implements MotorIO {
         config.Audio.BeepOnConfig = true;
         config.Audio.BeepOnBoot = true;
 
-        config.Slot0.kV = .125;
-
+        config.Slot0.kV = .1;
+//        config.Slot0.kA = .001;
+//        config.Slot0.kP = .75;
+        //config.Slot0.kI = 0;
 
         leader.getConfigurator().apply(config);
+        follower.getConfigurator().apply(config);
 
         velocitySignal = leader.getVelocity();
         supplyCurrentSignal = leader.getSupplyCurrent();
@@ -66,18 +66,21 @@ public class Kraken implements MotorIO {
 
         control = new VelocityVoltage(0);
         control.Slot = 0;
-        control.EnableFOC = true;
+        control.EnableFOC = false;
         control.IgnoreHardwareLimits = false;
         control.LimitForwardMotion = false;
         control.LimitReverseMotion = false;
+        control.UpdateFreqHz = 1000;
 
         leader.setControl(control);
     }
+
     @Override
     public void setVelocity(double velocity) {
         control.Velocity = velocity/60;
+        control.Acceleration = (velocity - velocitySignal.getValue().in(Units.RotationsPerSecond));
         leader.setControl(control);
-
+        follower.setControl(followerControl);
     }
 
     @Override
@@ -91,14 +94,8 @@ public class Kraken implements MotorIO {
         Logger.recordOutput("Motor Temp 1", leader.getDeviceTemp().getValue().in(Units.Celsius));
 
         Logger.recordOutput("Volts 2", follower.getMotorVoltage().getValue().in(Units.Volts));
-        Logger.recordOutput("Amps Stator 2", follower.getStatorCurrent().getValue().in(Units.Milliamps));
-        Logger.recordOutput("Amps Supply 2", follower.getSupplyCurrent().getValue().in(Units.Milliamps));
+        Logger.recordOutput("Amps Stator 2", follower.getStatorCurrent().getValue().in(Units.Amps));
+        Logger.recordOutput("Amps Supply 2", follower.getSupplyCurrent().getValue().in(Units.Amps));
         Logger.recordOutput("Motor Temp 2", follower.getDeviceTemp().getValue().in(Units.Celsius));
-
-
-
-
-
     }
-
 }

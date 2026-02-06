@@ -23,7 +23,6 @@ import org.littletonrobotics.junction.wpilog.WPILOGWriter;
  */
 public class Robot extends LoggedRobot{
     private MotorIO motor1;
-    private MotorIO motor2;
 
     private final XboxController controller;
 //    private final StadiaController controller;
@@ -40,7 +39,7 @@ public class Robot extends LoggedRobot{
         controller = new XboxController(0);
 //        controller = new StadiaController(1);
 
-            motor1 = new Kraken(0);
+            motor1 = new Kraken(1);
 //            motor2 = new Kraken(1);
 //            motor1 = new Neo(1);
 //            motor2 = new Neo(2);
@@ -54,7 +53,7 @@ public class Robot extends LoggedRobot{
     @Override
     public void robotPeriodic() {
         if(controller.getAButton()) {
-            motor1.setVelocity(SmartDashboard.getNumber("Top speed", 0));
+            motor1.setVelocity(SmartDashboard.getNumber("speed", 0));
 //            motor2.setVelocity(SmartDashboard.getNumber("Bottom speed", 0));
         }else{
             motor1.setVelocity(0);
